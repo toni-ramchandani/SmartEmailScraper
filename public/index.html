@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Scraper Tool</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f9;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        h1 { color: #4a90e2; margin-bottom: 10px; }
+        form, .results { background: #fff; padding: 20px; border-radius: 8px; max-width: 500px; width: 100%; }
+        textarea, button { width: 100%; padding: 10px; margin-top: 10px; border-radius: 5px; }
+        button { background-color: #4a90e2; color: #fff; border: none; cursor: pointer; }
+        button:disabled { background-color: #999; cursor: not-allowed; }
+        button:hover:enabled { background-color: #357ABD; }
+        .footer { margin-top: 20px; text-align: center; color: #666; }
+        .loading { font-style: italic; color: #666; }
+    </style>
+</head>
+<body>
+    <h1>Email Scraper Tool</h1>
+    <form id="scraperForm">
+        <label for="urls">Enter URLs (one per line):</label>
+        <textarea id="urls" name="urls" rows="5" placeholder="http://example.com"></textarea>
+        <button type="button" id="scrapeButton" onclick="scrapeEmails()">Scrape Emails</button>
+    </form>
+
+    <div id="loadingMessage" class="loading" style="display: none;">Scraping emails, please wait...</div>
+    <div class="results" id="results"></div>
+
+    <div class="footer">
+        <p>Created by <strong>Toni Ramchandani</strong></p>
+        <p>
+            Connect with me on
+            <a href="https://www.linkedin.com/in/toni-ramchandani" target="_blank">LinkedIn</a> |
+            <a href="https://github.com/yourgithubusername" target="_blank">GitHub</a>
+        </p>
+    </div>
+
+    <script>
+        async function scrapeEmails() {
+            console.log("Scrape button clicked");  // Log the function call
+
+            const scrapeButton = document.getElementById("scrapeButton");
+            const loadingMessage = document.getElementById("loadingMessage");
+            const resultsDiv = document.getElementById("results");
+            const urls = document.getElementById("urls").value.trim().split("\n").map(url => url.trim());
+
+            if (urls.length === 0) return;
+
+            // Disable the button and show loading message
+            scrapeButton.disabled = true;
+            loadingMessage.style.display = "block";
+            resultsDiv.innerHTML = ""; // Clear previous results
+
+            try {
+                // Log before sending the request
+                console.log("Sending request to server...");
+
+                // Send request to the server
+                const response = await fetch("/scrape", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ urls })
+                });
+
+                // Log after receiving the response
+                console.log("Received response from server");
+
+                const results = await response.json();
+
+                // Display results on the page
+                resultsDiv.innerHTML = "<h3>Scraped Emails:</h3>";
+                for (let url in results) {
+                    const emails = results[url];
+                    resultsDiv.innerHTML += `<strong>${url}</strong><br>`;
+                    if (emails.length > 0) {
+                        resultsDiv.innerHTML += `<ul>${emails.map(email => `<li>${email}</li>`).join('')}</ul>`;
+                    } else {
+                        resultsDiv.innerHTML += "<p>No emails found.</p>";
+                    }
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = "<p>Error occurred while scraping emails. Please try again.</p>";
+                console.error("Error:", error);
+            } finally {
+                // Re-enable the button and hide loading message
+                scrapeButton.disabled = false;
+                loadingMessage.style.display = "none";
+                console.log("Process complete");
+            }
+        }
+    </script>
+</body>
+</html>
